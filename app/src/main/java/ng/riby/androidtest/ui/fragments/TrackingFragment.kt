@@ -17,6 +17,7 @@ import ng.riby.androidtest.others.Constants.ACTION_START_OR_RESUME_SERVICE
 import ng.riby.androidtest.others.Constants.MAP_ZOOM
 import ng.riby.androidtest.others.Constants.POLYLINE_COLOR
 import ng.riby.androidtest.others.Constants.POLYLINE_WIDTH
+import ng.riby.androidtest.others.TrackingUtility
 import ng.riby.androidtest.services.Polyline
 import ng.riby.androidtest.services.Polylines
 import ng.riby.androidtest.services.TrackingService
@@ -30,6 +31,9 @@ class TrackingFragment: Fragment(R.layout.fragment_tracking) {
     //global variable for isTracking state and pathPoint list
     private var isTracking = false
     private var pathPoints= mutableListOf<Polyline>()
+
+
+    private var currentTimeInMillis = 0L
 
     //Google map is actual map object
     //mapView is view that will display this google map
@@ -114,6 +118,12 @@ class TrackingFragment: Fragment(R.layout.fragment_tracking) {
             pathPoints = it
             addLatestPolyLine()
             moveCameraToUser()
+        })
+
+        TrackingService.timeInMilliSeconds.observe(viewLifecycleOwner, Observer {
+            currentTimeInMillis = it
+            val formattedTime = TrackingUtility.getFormattedStopWatchTime(currentTimeInMillis, true)
+            tvTimer.text = formattedTime
         })
     }
 

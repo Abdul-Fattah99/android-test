@@ -1,7 +1,9 @@
 package ng.riby.androidtest.others
 
 import android.content.Context
+import android.location.Location
 import android.os.Build
+import ng.riby.androidtest.services.Polyline
 import pub.devrel.easypermissions.EasyPermissions
 import java.sql.Time
 import java.util.concurrent.TimeUnit
@@ -12,6 +14,26 @@ import kotlin.math.min
 //object because it will only have functions we dnt need an instance of this class
 
 object TrackingUtility {
+
+//use our polyline not google map polyline
+    fun calculatePolylineLength(polyline: Polyline) : Float{
+    var distance = 0f
+    for (i in 0..polyline.size - 2){
+        val pos1 = polyline[i]
+        val pos2 = polyline[i + 1]
+
+        val result = FloatArray(1)
+        Location.distanceBetween(
+                pos1.latitude,
+                pos1.longitude,
+                pos2.latitude,
+                pos2.longitude,
+                result
+        )
+        distance += result[0]
+    }
+    return distance
+}
 
 
     //ANDROID Q NOT PRESENT

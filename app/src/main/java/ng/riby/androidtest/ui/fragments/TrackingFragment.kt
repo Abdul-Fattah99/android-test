@@ -1,19 +1,27 @@
 package ng.riby.androidtest.ui.fragments
 
+import android.content.DialogInterface
 import android.content.Intent
 import android.os.Bundle
-import android.view.View
+import android.view.*
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
+import androidx.navigation.fragment.findNavController
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.PolylineOptions
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.android.synthetic.main.fragment_tracking.*
 import ng.riby.androidtest.R
+import ng.riby.androidtest.db.Distance
 import ng.riby.androidtest.others.Constants.ACTION_PAUSE_SERVICE
 import ng.riby.androidtest.others.Constants.ACTION_START_OR_RESUME_SERVICE
+import ng.riby.androidtest.others.Constants.ACTION_STOP_SERVICE
 import ng.riby.androidtest.others.Constants.MAP_ZOOM
 import ng.riby.androidtest.others.Constants.POLYLINE_COLOR
 import ng.riby.androidtest.others.Constants.POLYLINE_WIDTH
@@ -22,6 +30,8 @@ import ng.riby.androidtest.services.Polyline
 import ng.riby.androidtest.services.Polylines
 import ng.riby.androidtest.services.TrackingService
 import ng.riby.androidtest.ui.viewmodels.MainViewModel
+import java.util.*
+import kotlin.math.round
 
 @AndroidEntryPoint
 class TrackingFragment: Fragment(R.layout.fragment_tracking) {
@@ -39,6 +49,19 @@ class TrackingFragment: Fragment(R.layout.fragment_tracking) {
     //mapView is view that will display this google map
     private var map: GoogleMap? = null
 
+    private var menu: Menu? = null
+
+    override fun onCreateView(
+            inflater: LayoutInflater,
+            container: ViewGroup?,
+            savedInstanceState: Bundle?
+    ): View? {
+        setHasOptionsMenu(true)
+        return super.onCreateView(inflater, container, savedInstanceState)
+
+    }
+
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
@@ -48,14 +71,55 @@ class TrackingFragment: Fragment(R.layout.fragment_tracking) {
             toggleRun()
         }
 
+        btnFinishDistance.setOnClickListener {
+            zoomToSeeWholeTrack()
+            endRunAndSaveToDb()
+        }
+
         mapView.getMapAsync {
             map = it
             addAllPolylines()
         }
-
-
-
         subscribeToObservers()
+    }
+
+    //zoom to too the whole details of the track
+    private fun zoomToSeeWholeTrack(){
+        val bounds = LatLngBounds.Builder()
+        for(polyline in pathPoints){
+            for(pos in polyline){
+                bounds.include((pos))
+            }
+        }
+        map?.moveCamera(
+                CameraUpdateFactory.newLatLngBounds(
+                        bounds.build(),
+                        mapView.width,
+                        mapView.height,
+                        (mapView.height * 0.05).toInt()
+                )
+        )
+    }
+
+    //end run and save to db
+    private fun endRunAndSaveToDb(){
+        map?.snapshot { bmp ->
+            var distanceInMeters = 0
+            for(polyline in pathPoints){
+                distanceInMeters += TrackingUtility.calculatePolylineLength(polyline).toInt()
+            }
+
+            val avgSpeed = round((distanceInMeters / 1000f) / (currentTimeInMillis / 1000f / 60 / 60) *10) / 10f
+            val dateTimeStamp = Calendar.getInstance().timeInMillis
+            val distance = Distance(bmp, dateTimeStamp, avgSpeed, distanceInMeters, currentTimeInMillis)
+            viewModel.insertDistance(distance)
+            Snackbar.make(
+                    requireActivity().findViewById(R.id.rootView),
+                    "Distance saved successfully",
+                    Snackbar.LENGTH_LONG
+            ).show()
+            stopRun()
+        }
     }
 
     /*we have to worry about adding polylines again cos addLatestPolyLine()
@@ -84,15 +148,62 @@ class TrackingFragment: Fragment(R.layout.fragment_tracking) {
 
         }    }
 
+    //create menu for cancel tracking
+    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+        super.onCreateOptionsMenu(menu, inflater)
+        inflater.inflate(R.menu.tool_bar_tracking_menu, menu)
+        this.menu = menu
+    }
+
+    override fun onPrepareOptionsMenu(menu: Menu) {
+        super.onPrepareOptionsMenu(menu)
+        if(currentTimeInMillis>0L){
+            this.menu?.getItem(0)?.isVisible = true
+        }
+    }
+
+    //Alert dialog to confirm cancel tracking
+    private fun showCancelTackingDialog(){
+        val dialog = MaterialAlertDialogBuilder(requireContext(), R.style.AlertDialogTheme)
+                .setTitle("Cancel Tracking")
+                .setMessage("Are you sure you want to cancel the tracking and delete all its data?")
+                .setIcon(R.drawable.ic_delete)
+                .setPositiveButton("Yes"){_, _ ->
+                    stopRun()
+                }
+                .setNegativeButton("No"){ dialogInterface: DialogInterface?, _ ->
+                    dialogInterface?.cancel()
+                }
+                .create()
+        dialog.show()
+
+    }
+
+    private fun stopRun(){
+        sendCommandToService(ACTION_STOP_SERVICE)
+        findNavController().navigate((R.id.action_trackingFragment_to_distancesFragment))
+
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when(item.itemId){
+            R.id.mlCancelTracking ->{
+                showCancelTackingDialog()
+            }
+        }
+        return super.onOptionsItemSelected(item)
+    }
+
     //observe data from service and react to those changes
     private fun updateTracking(isTracking:Boolean){
         this.isTracking = isTracking
         if(!isTracking){
             btnToggleDistance.text = "Start"
-            btnFinishDistance.visibility = View.VISIBLE
+            btnFinishDistance.visibility = View.GONE
         }else{
             btnToggleDistance.text = "Stop"
-            btnFinishDistance.visibility =  View.GONE
+            menu?.getItem(0)?.isVisible = true
+            btnFinishDistance.visibility =  View.VISIBLE
         }
     }
 
@@ -102,6 +213,7 @@ class TrackingFragment: Fragment(R.layout.fragment_tracking) {
      */
     private fun toggleRun(){
         if(isTracking){
+            menu?.getItem(0)?.isVisible = true
             sendCommandToService(ACTION_PAUSE_SERVICE)
         }else{
             sendCommandToService(ACTION_START_OR_RESUME_SERVICE)

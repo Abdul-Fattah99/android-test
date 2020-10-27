@@ -6,10 +6,13 @@ import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.Observer
 import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.LinearLayoutManager
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.android.synthetic.main.fragment_distances.*
 import ng.riby.androidtest.R
+import ng.riby.androidtest.adapters.DistanceAdapter
 import ng.riby.androidtest.others.Constants.REQUEST_CODE_LOCATION_PERMISSION
 import ng.riby.androidtest.others.TrackingUtility
 import ng.riby.androidtest.ui.viewmodels.MainViewModel
@@ -21,13 +24,29 @@ class DistancesFragment: Fragment(R.layout.fragment_distances), EasyPermissions.
 
     private val viewModel: MainViewModel by viewModels()
 
+    private lateinit var distanceAdapter: DistanceAdapter
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         requestPermission()
 
+        setupRecyclerView()
+
+        viewModel.distanceSortedByDate.observe(viewLifecycleOwner, Observer {
+            distanceAdapter.submitList(it)
+        })
+
+
         fab.setOnClickListener {
             findNavController().navigate(R.id.action_distancesFragment_to_trackingFragment)
         }
+    }
+
+    //set up recycler view
+    private fun setupRecyclerView() = rvDistances.apply {
+        distanceAdapter = DistanceAdapter()
+        adapter = distanceAdapter
+        layoutManager = LinearLayoutManager(requireContext())
     }
 
     private fun requestPermission(){

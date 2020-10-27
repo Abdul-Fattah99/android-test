@@ -15,6 +15,9 @@ class MainViewModel @ViewModelInject constructor(
     fun insertDistance(distance: Distance) = viewModelScope.launch {
         mainRepository.insertDistance(distance)
     }
+
+    //for now
+    val distanceSortedByDate = mainRepository.getAllDistancesSortedByDate()
 }
 //Job of MainViewModel is to collect data from repository and provide it for those fragments
 // that will need mainViewModel

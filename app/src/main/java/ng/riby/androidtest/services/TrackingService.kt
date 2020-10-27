@@ -214,6 +214,7 @@ class TrackingService : LifecycleService() {
 //
 //        }
 
+
         if(!serviceKilled){
             currentNotificationBuilder = baseNotificationBuilder
                     .addAction(R.drawable.ic_pause_black_24dp, notificationActionText, pendingIntent)

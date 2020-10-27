@@ -5,5 +5,4 @@ import ng.riby.androidtest.R
 
 class SettingsFragment:Fragment(R.layout.fragment_settings) {
 
-    
 }

@@ -197,10 +197,10 @@ class TrackingFragment: Fragment(R.layout.fragment_tracking) {
     //observe data from service and react to those changes
     private fun updateTracking(isTracking:Boolean){
         this.isTracking = isTracking
-        if(!isTracking){
+        if(!isTracking && currentTimeInMillis >0L){
             btnToggleDistance.text = "Start"
             btnFinishDistance.visibility = View.GONE
-        }else{
+        }else if(isTracking){
             btnToggleDistance.text = "Stop"
             menu?.getItem(0)?.isVisible = true
             btnFinishDistance.visibility =  View.VISIBLE

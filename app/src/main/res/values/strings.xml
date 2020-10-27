@@ -8,4 +8,7 @@
         <item>Average Speed</item>
     </string-array>
     <string name="google_maps_key">AIzaSyAJDSFo3NnwQ1i5Gq7GpID7ByKxmBn92qs</string>
+    <string name="track_your_movements">Track your movements</string>
+    <string name="welcome">Welcome!</string>
+    <string name="distance_image">distance Image</string>
 </resources>

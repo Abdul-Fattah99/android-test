@@ -13,11 +13,11 @@ class MainRepository @Inject constructor(
 
     fun getAllDistancesSortedByDate() = distanceDAO.getAllDistancesSortedByDate()
 
-    fun getAllDistancesSortedByDistance() = distanceDAO.getAllRunsSortedByDistance()
+    fun getAllDistancesSortedByDistance() = distanceDAO.getAllDistancesSortedByDistance()
 
-    fun getAllDistancesSortedByTimeInMillis() = distanceDAO.getAllRunsSortedByTimeInMillis()
+    fun getAllDistancesSortedByTimeInMillis() = distanceDAO.getAllDistancesSortedByTimeInMillis()
 
-    fun getAllDistancesSortedByAverageSpeed() = distanceDAO.getAllRunsSortedByAverageSpeed()
+    fun getAllDistancesSortedByAverageSpeed() = distanceDAO.getAllDistancesSortedByAverageSpeed()
 
     fun getTotalAverageSpeed() = distanceDAO.getTotalAverageSpeed()
 

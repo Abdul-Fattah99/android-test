@@ -3,7 +3,7 @@
     <string name="start">Start</string>
     <string-array name="filter_options">
         <item>Date</item>
-        <item>Duration</item>
+        <item>Time</item>
         <item>Distance</item>
         <item>Average Speed</item>
     </string-array>

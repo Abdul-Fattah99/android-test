@@ -17,14 +17,14 @@ interface DistanceDAO {
 
 
     @Query("SELECT * FROM distance_table ORDER BY timeInMillis DESC")
-    fun getAllRunsSortedByTimeInMillis():LiveData<List<Distance>>
+    fun getAllDistancesSortedByTimeInMillis():LiveData<List<Distance>>
 
 
     @Query("SELECT * FROM distance_table ORDER BY averageSpeedInKMH DESC")
-    fun getAllRunsSortedByAverageSpeed():LiveData<List<Distance>>
+    fun getAllDistancesSortedByAverageSpeed():LiveData<List<Distance>>
 
     @Query("SELECT * FROM distance_table ORDER BY distanceInMeters DESC")
-    fun getAllRunsSortedByDistance():LiveData<List<Distance>>
+    fun getAllDistancesSortedByDistance():LiveData<List<Distance>>
 
     //to get total time for all distances
     @Query("SELECT SUM(timeInMillis) FROM distance_table")

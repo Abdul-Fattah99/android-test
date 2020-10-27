@@ -4,6 +4,7 @@ import android.Manifest
 import android.os.Build
 import android.os.Bundle
 import android.view.View
+import android.widget.AdapterView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
@@ -14,6 +15,7 @@ import kotlinx.android.synthetic.main.fragment_distances.*
 import ng.riby.androidtest.R
 import ng.riby.androidtest.adapters.DistanceAdapter
 import ng.riby.androidtest.others.Constants.REQUEST_CODE_LOCATION_PERMISSION
+import ng.riby.androidtest.others.SortType
 import ng.riby.androidtest.others.TrackingUtility
 import ng.riby.androidtest.ui.viewmodels.MainViewModel
 import pub.devrel.easypermissions.AppSettingsDialog
@@ -32,7 +34,27 @@ class DistancesFragment: Fragment(R.layout.fragment_distances), EasyPermissions.
 
         setupRecyclerView()
 
-        viewModel.distanceSortedByDate.observe(viewLifecycleOwner, Observer {
+        when(viewModel.sortType){
+            SortType.DATE -> spFilter.setSelection(0)
+            SortType.DISTANCE_TIME -> spFilter.setSelection(1)
+            SortType.DISTANCE -> spFilter.setSelection(3)
+            SortType.AVG_SPEED -> spFilter.setSelection(4)
+        }
+
+        spFilter.onItemSelectedListener = object : AdapterView.OnItemSelectedListener{
+            override fun onNothingSelected(parent: AdapterView<*>?) {}
+
+            override fun onItemSelected(adapterView: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                when(position){
+                    0 -> viewModel.sortDistance(SortType.DATE)
+                    1 -> viewModel.sortDistance(SortType.DISTANCE_TIME)
+                    2 -> viewModel.sortDistance(SortType.DISTANCE)
+                    3 -> viewModel.sortDistance(SortType.AVG_SPEED)
+                }
+            }
+        }
+
+        viewModel.distances.observe(viewLifecycleOwner, Observer {
             distanceAdapter.submitList(it)
         })
 
